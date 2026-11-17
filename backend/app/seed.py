@@ -1,16 +1,16 @@
-"""Carga inicial: el catálogo de data/products.json y el usuario de prueba del .env."""
+"""Carga inicial: el catálogo de data/products.json y los usuarios de prueba del .env."""
 
 import json
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, TypeAdapter
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import Settings
-from app.models import Product
+from app.models import Product, User
 from app.security import hash_password
-from app.users import create_user, find_user, validate_new_credentials
+from app.users import create_user, find_user, validate_password
 
 PRODUCTS_FILE = Path(__file__).resolve().parents[1] / "data" / "products.json"
 
@@ -65,25 +65,33 @@ def seed_products(db: Session, seeds: list[ProductSeed]) -> tuple[int, int]:
     return created, len(seeds) - created
 
 
-def ensure_demo_user(db: Session, settings: Settings) -> str | None:
-    """Crea el usuario de prueba del .env, o le pone la contraseña del .env si ya existe.
-
-    Devuelve su email, o None si el .env no define usuario de prueba.
-    """
-    password = settings.demo_user_password.get_secret_value() if settings.demo_user_password else ""
-    if not settings.demo_user_email or not password:
-        return None
-    user = find_user(db, settings.demo_user_email)
+def ensure_user(db: Session, *, username: str, password: str, is_admin: bool) -> User:
+    """Crea el usuario o, si ya existe, le pone esa contraseña y ese rol."""
+    user = find_user(db, username)
     if user is None:
-        user = create_user(
-            db,
-            email=settings.demo_user_email,
-            password=password,
-            full_name=settings.demo_user_name,
-        )
-    else:
-        validate_new_credentials(user.email, password)
-        user.password_hash = hash_password(password)
-        user.full_name = settings.demo_user_name or user.full_name
-        db.flush()
-    return user.email
+        return create_user(db, username=username, password=password, is_admin=is_admin)
+    validate_password(password)
+    user.password_hash = hash_password(password)
+    user.is_admin = is_admin
+    db.flush()
+    return user
+
+
+def _secret(value: SecretStr | None) -> str:
+    return value.get_secret_value() if value else ""
+
+
+def ensure_seed_users(db: Session, settings: Settings) -> list[str]:
+    """Crea el cliente de prueba y el administrador del .env. Devuelve sus nombres.
+
+    Un usuario sin contraseña en el .env no se crea.
+    """
+    seeded = []
+    for username, password, is_admin in (
+        (settings.demo_user_username, _secret(settings.demo_user_password), False),
+        (settings.admin_username, _secret(settings.admin_password), True),
+    ):
+        if username and password:
+            user = ensure_user(db, username=username, password=password, is_admin=is_admin)
+            seeded.append(user.username)
+    return seeded

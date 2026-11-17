@@ -1,43 +1,63 @@
 "use client";
 
-import { useActionState } from "react";
+import { usePendingSubmit } from "@/components/use-pending-submit";
+import { useUrlParams } from "@/components/use-url-params";
+import { pick } from "@/lib/form";
 
-import { login, type LoginState } from "@/lib/actions";
+const ERRORS: Record<string, string> = {
+  missing: "Escribe tu nombre de usuario y tu contraseña.",
+  credentials: "Nombre de usuario o contraseña incorrectos.",
+  throttled: "Demasiados intentos fallidos. Espera unos minutos y vuelve a probar.",
+  server: "No hemos podido conectar con el servidor. Inténtalo de nuevo en unos minutos.",
+};
 
-const initialState: LoginState = { error: null, email: "" };
+const REASONS: Record<string, string> = {
+  buy: "Para comprar hay que iniciar sesión. Si aún no tienes cuenta, créala en un momento.",
+  favorite: "Inicia sesión para guardar piezas en favoritos.",
+};
 
-const inputClass =
-  "mt-2 w-full rounded-sm border border-line bg-white px-3.5 py-2.5 text-ink placeholder:text-ink-soft/60 focus:border-oxblood";
-
+/**
+ * Se envía con un POST normal a /session/login, que deja la cookie y lleva a /signed-in. Si algo
+ * falla, vuelve aquí con el motivo y el nombre de usuario en la URL.
+ */
 export function LoginForm() {
-  const [state, formAction, pending] = useActionState(login, initialState);
+  const pending = usePendingSubmit();
+  const params = useUrlParams();
+  const error = pick(ERRORS, params.get("error") ?? undefined);
+  const notice = pick(REASONS, params.get("reason") ?? undefined);
+  const username = params.get("username") ?? "";
 
   return (
-    <form action={formAction} className="mt-8 flex flex-col gap-5">
-      {state.error && (
-        <p
-          role="alert"
-          className="rounded-sm border border-oxblood/40 bg-oxblood/5 px-4 py-3 text-sm text-oxblood-deep"
-        >
-          {state.error}
+    <form
+      method="post"
+      action="/session/login"
+      onSubmit={pending.start}
+      className="mt-8 flex flex-col gap-5"
+    >
+      {notice && <p className="notice">{notice}</p>}
+      {error && (
+        <p role="alert" className="notice-error">
+          {error}
         </p>
       )}
 
-      <label className="text-sm font-medium">
-        Email
+      <label className="field">
+        Nombre de usuario
         <input
-          type="email"
-          name="email"
+          // La clave cambia solo si la URL trae un nombre (tras un error): entonces se rellena.
+          key={username}
+          name="username"
           autoComplete="username"
+          autoCapitalize="none"
+          spellCheck={false}
           required
-          maxLength={254}
-          defaultValue={state.email}
-          placeholder="tu@email.com"
-          className={inputClass}
+          maxLength={30}
+          defaultValue={username}
+          className="input"
         />
       </label>
 
-      <label className="text-sm font-medium">
+      <label className="field">
         Contraseña
         <input
           type="password"
@@ -45,12 +65,12 @@ export function LoginForm() {
           autoComplete="current-password"
           required
           maxLength={1024}
-          className={inputClass}
+          className="input"
         />
       </label>
 
-      <button type="submit" disabled={pending} className="btn btn-primary mt-2 py-3">
-        {pending ? "Entrando…" : "Iniciar sesión"}
+      <button type="submit" disabled={pending.active} className="btn btn-primary mt-2 py-3">
+        {pending.active ? "Entrando…" : "Iniciar sesión"}
       </button>
     </form>
   );

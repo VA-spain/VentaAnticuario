@@ -92,22 +92,22 @@ class LoginThrottle:
         self._per_client = per_client or FailureWindow(max_failures=5, window_seconds=15 * 60)
         self._per_account = per_account or FailureWindow(max_failures=20, window_seconds=15 * 60)
 
-    def retry_after(self, email: str, client_ip: str) -> int:
+    def retry_after(self, username: str, client_ip: str) -> int:
         return max(
-            self._per_client.retry_after(self._client_key(email, client_ip)),
-            self._per_account.retry_after(email),
+            self._per_client.retry_after(self._client_key(username, client_ip)),
+            self._per_account.retry_after(username),
         )
 
-    def register_failure(self, email: str, client_ip: str) -> None:
-        self._per_client.add_failure(self._client_key(email, client_ip))
-        self._per_account.add_failure(email)
+    def register_failure(self, username: str, client_ip: str) -> None:
+        self._per_client.add_failure(self._client_key(username, client_ip))
+        self._per_account.add_failure(username)
 
-    def register_success(self, email: str, client_ip: str) -> None:
-        self._per_client.reset(self._client_key(email, client_ip))
+    def register_success(self, username: str, client_ip: str) -> None:
+        self._per_client.reset(self._client_key(username, client_ip))
 
     @staticmethod
-    def _client_key(email: str, client_ip: str) -> str:
-        return f"{client_ip}|{email}"
+    def _client_key(username: str, client_ip: str) -> str:
+        return f"{client_ip}|{username}"
 
 
 _login_throttle = LoginThrottle()

@@ -1,25 +1,7 @@
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.models import Product
-
-
-def make_product(slug: str, sort_order: int) -> Product:
-    return Product(
-        slug=slug,
-        name=f"Pieza {slug}",
-        category="Relojes",
-        period="c. 1900",
-        origin="Selva Negra",
-        description="Descripción de prueba.",
-        price_cents=120_000,
-        image_path=f"/products/{slug}.jpg",
-        image_alt="Foto de prueba",
-        image_author="Autora de prueba",
-        image_license="CC0 1.0",
-        image_source_url="https://commons.wikimedia.org/wiki/File:Prueba.jpg",
-        sort_order=sort_order,
-    )
+from tests.factories import make_product
 
 
 def test_catalog_is_empty_without_products(client: TestClient) -> None:

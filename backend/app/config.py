@@ -23,12 +23,14 @@ class Settings(BaseSettings):
     mysql_user: str = "va_app"
     mysql_password: SecretStr | None = None
 
-    # Entre 5 minutos y 30 días.
+    # Cuánto dura la cookie de sesión en el navegador (entre 5 minutos y 30 días).
     session_ttl_minutes: int = Field(default=480, ge=5, le=43_200)
 
-    demo_user_email: str = ""
-    demo_user_name: str = ""
+    # Usuarios que crea `init-db`: uno normal y un administrador. Sin contraseña no se crean.
+    demo_user_username: str = ""
     demo_user_password: SecretStr | None = None
+    admin_username: str = ""
+    admin_password: SecretStr | None = None
 
     def database_url(self) -> URL:
         if self.mysql_password is None or not self.mysql_password.get_secret_value():

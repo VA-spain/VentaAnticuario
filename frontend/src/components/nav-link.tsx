@@ -1,22 +1,24 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 
-/** Enlace del menú que se marca cuando es la página en la que estás. */
+import { ActiveLink } from "./active-link";
+import { navLinkClass } from "./nav-style";
+
+/**
+ * Enlace del menú. Saber si es la página actual exige leer la URL, que en las rutas con
+ * parámetros (/admin/users/[username]) solo se conoce al pedir la página: mientras tanto se
+ * muestra el mismo enlace sin marcar.
+ */
 export function NavLink({ href, children }: { href: string; children: ReactNode }) {
-  const isCurrent = usePathname() === href;
-
   return (
-    <Link
-      href={href}
-      aria-current={isCurrent ? "page" : undefined}
-      className={`rounded-sm px-3 py-2 transition-colors hover:text-oxblood ${
-        isCurrent ? "text-oxblood underline decoration-1 underline-offset-8" : "text-ink"
-      }`}
+    <Suspense
+      fallback={
+        <Link href={href} className={navLinkClass(false)}>
+          {children}
+        </Link>
+      }
     >
-      {children}
-    </Link>
+      <ActiveLink href={href}>{children}</ActiveLink>
+    </Suspense>
   );
 }

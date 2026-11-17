@@ -3,22 +3,7 @@ import "server-only";
 import { unstable_rethrow } from "next/navigation";
 
 import { backendFetch } from "./backend";
-
-export type Product = {
-  id: number;
-  slug: string;
-  name: string;
-  category: string;
-  period: string;
-  origin: string;
-  description: string;
-  price_cents: number;
-  image_path: string;
-  image_alt: string;
-  image_author: string;
-  image_license: string;
-  image_source_url: string;
-};
+import type { Product } from "./types";
 
 /**
  * Catálogo completo, leído de MySQL a través del backend en cada visita.

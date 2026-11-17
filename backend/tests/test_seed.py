@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.config import REPO_ROOT, Settings
 from app.models import Product, User
 from app.security import verify_password
-from app.seed import ProductSeed, ensure_demo_user, load_product_seeds, seed_products
+from app.seed import ProductSeed, ensure_seed_users, load_product_seeds, seed_products
 
 PUBLIC_DIR = REPO_ROOT / "frontend" / "public"
 
@@ -66,37 +66,41 @@ def test_catalog_entry_with_an_unknown_field_is_rejected() -> None:
         seed("uno", precio=10)
 
 
-def test_demo_user_is_created_with_a_hashed_password(db: Session) -> None:
-    settings = Settings(
-        _env_file=None,
-        demo_user_email="Demo@Example.com",
-        demo_user_name="Prueba",
-        demo_user_password="una-clave-de-prueba",
+def seed_settings(**values: str) -> Settings:
+    return Settings(_env_file=None, **values)
+
+
+def test_seed_users_are_created_with_their_roles_and_hashed_passwords(db: Session) -> None:
+    settings = seed_settings(
+        demo_user_username="Cliente",
+        demo_user_password="clave-de-prueba-1",
+        admin_username="admin",
+        admin_password="clave-de-prueba-2",
     )
 
-    assert ensure_demo_user(db, settings) == "demo@example.com"
+    assert ensure_seed_users(db, settings) == ["cliente", "admin"]
     db.commit()
 
-    user = db.scalar(select(User))
-    assert user.full_name == "Prueba"
-    assert user.password_hash.startswith("$argon2id$")
-    assert verify_password(user.password_hash, "una-clave-de-prueba")
+    users = {user.username: user for user in db.scalars(select(User))}
+    assert users["cliente"].is_admin is False
+    assert users["admin"].is_admin is True
+    assert users["admin"].password_hash.startswith("$argon2id$")
+    assert verify_password(users["admin"].password_hash, "clave-de-prueba-2")
 
 
-def test_demo_user_gets_the_new_password_when_the_env_changes(db: Session) -> None:
-    base = {"_env_file": None, "demo_user_email": "demo@example.com"}
-    ensure_demo_user(db, Settings(**base, demo_user_password="primera-clave-larga"))
-    ensure_demo_user(db, Settings(**base, demo_user_password="segunda-clave-larga"))
+def test_seed_users_get_the_new_password_when_the_env_changes(db: Session) -> None:
+    ensure_seed_users(db, seed_settings(admin_username="admin", admin_password="primera-clave"))
+    ensure_seed_users(db, seed_settings(admin_username="admin", admin_password="segunda-clave"))
     db.commit()
 
     users = db.scalars(select(User)).all()
     assert len(users) == 1
-    assert verify_password(users[0].password_hash, "segunda-clave-larga")
-    assert not verify_password(users[0].password_hash, "primera-clave-larga")
+    assert verify_password(users[0].password_hash, "segunda-clave")
+    assert not verify_password(users[0].password_hash, "primera-clave")
 
 
-def test_no_demo_user_without_a_password(db: Session) -> None:
-    settings = Settings(_env_file=None, demo_user_email="demo@example.com", demo_user_password="")
+def test_no_seed_users_without_passwords(db: Session) -> None:
+    settings = seed_settings(demo_user_username="cliente", admin_username="admin")
 
-    assert ensure_demo_user(db, settings) is None
+    assert ensure_seed_users(db, settings) == []
     assert db.scalar(select(User)) is None

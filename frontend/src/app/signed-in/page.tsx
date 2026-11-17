@@ -3,7 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-import { logout } from "@/lib/actions";
+import { logout } from "@/actions/auth";
+import { CheckIcon } from "@/components/icons";
 import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -37,28 +38,26 @@ async function SignedIn() {
   return (
     <>
       <span className="flex size-16 items-center justify-center rounded-full bg-oxblood text-paper">
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="size-8"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M5 12.5l4.5 4.5L19 7.5" />
-        </svg>
+        <CheckIcon />
       </span>
       <h1 className="mt-8 font-display text-4xl font-semibold leading-tight sm:text-5xl">
         Has iniciado sesión correctamente
       </h1>
       <p className="mt-4 text-lg text-ink-soft">
-        Sesión iniciada como <strong className="font-medium text-ink">{user.email}</strong>
+        Sesión iniciada como <strong className="font-medium text-ink">{user.username}</strong>
+        {user.is_admin ? " (administrador)" : ""}
       </p>
       <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-        <Link href="/" className="btn btn-primary">
-          Ver el catálogo
+        <Link href="/account" className="btn btn-primary">
+          Ir a mi portal
+        </Link>
+        {user.is_admin && (
+          <Link href="/admin" className="btn btn-outline">
+            Administración
+          </Link>
+        )}
+        <Link href="/" className="btn btn-outline">
+          Seguir comprando
         </Link>
         <form action={logout}>
           <button type="submit" className="btn btn-outline">

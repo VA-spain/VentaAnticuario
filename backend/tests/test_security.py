@@ -1,4 +1,11 @@
-from app.security import hash_password, hash_token, new_session_token, verify_password
+import pytest
+
+from app.security import (
+    hash_password,
+    make_session_value,
+    parse_session_value,
+    verify_password,
+)
 
 
 def test_password_hash_is_argon2id_and_salted() -> None:
@@ -23,11 +30,30 @@ def test_verify_password_rejects_a_value_that_is_not_a_hash() -> None:
     assert verify_password("texto-plano", "texto-plano") is False
 
 
-def test_session_token_is_stored_as_sha256() -> None:
-    token = new_session_token()
+def test_session_values_have_the_requested_shape() -> None:
+    assert make_session_value("ana", is_admin=False) == "ana+0987654321"
+    assert make_session_value("ana", is_admin=True) == "0987654321+ana"
 
-    assert len(token) >= 43  # 32 bytes aleatorios en base64 url
-    assert new_session_token() != token
-    assert len(hash_token(token)) == 64
-    assert token not in hash_token(token)
-    assert hash_token(token) == hash_token(token)
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("ana+0987654321", ("ana", False)),
+        ("0987654321+ana", ("ana", True)),
+        ("ana", None),
+        ("+0987654321", None),
+        ("0987654321+", None),
+        ("ana+1234", None),
+        ("", None),
+    ],
+)
+def test_parse_session_value(value: str, expected: tuple[str, bool] | None) -> None:
+    assert parse_session_value(value) == expected
+
+
+@pytest.mark.parametrize("username", ["ana", "luis.m", "x_y-z"])
+@pytest.mark.parametrize("is_admin", [True, False])
+def test_session_values_round_trip(username: str, is_admin: bool) -> None:
+    value = make_session_value(username, is_admin=is_admin)
+
+    assert parse_session_value(value) == (username, is_admin)

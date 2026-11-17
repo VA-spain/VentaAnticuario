@@ -46,7 +46,39 @@ body {
     @apply text-oxblood hover:bg-oxblood hover:text-paper;
   }
 
+  .btn-sm {
+    @apply px-3.5 py-1.5 text-xs;
+  }
+
   .eyebrow {
     @apply text-xs font-medium uppercase tracking-[0.2em] text-brass;
+  }
+
+  .field {
+    @apply flex flex-col gap-2 text-sm font-medium;
+  }
+
+  .input {
+    @apply w-full rounded-sm border border-line bg-white px-3.5 py-2.5 font-normal text-ink placeholder:text-ink-soft/60 focus:border-oxblood;
+  }
+
+  .field-hint {
+    @apply text-xs font-normal text-ink-soft;
+  }
+
+  .field-error {
+    @apply text-sm font-normal text-oxblood-deep;
+  }
+
+  .notice {
+    @apply rounded-sm border border-line bg-paper-deep px-4 py-3 text-sm text-ink-soft;
+  }
+
+  .notice-error {
+    @apply rounded-sm border border-oxblood/40 bg-oxblood/5 px-4 py-3 text-sm text-oxblood-deep;
+  }
+
+  .notice-ok {
+    @apply rounded-sm border border-brass/50 bg-brass/10 px-4 py-3 text-sm text-ink;
   }
 }

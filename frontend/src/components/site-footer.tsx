@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+const linkClass = "underline decoration-line underline-offset-4 hover:text-oxblood";
+
 export function SiteFooter() {
   return (
     <footer className="border-t border-line">
@@ -8,12 +10,14 @@ export function SiteFooter() {
           <span className="font-display text-lg text-ink">Venta Anticuario</span> · Antigüedades
           alemanas
         </p>
-        <Link
-          href="/about#creditos"
-          className="underline decoration-line underline-offset-4 hover:text-oxblood"
-        >
-          Créditos de las fotografías
-        </Link>
+        <p className="flex gap-5">
+          <Link href="/contact" className={linkClass}>
+            Contacto
+          </Link>
+          <Link href="/about#creditos" className={linkClass}>
+            Créditos de las fotografías
+          </Link>
+        </p>
       </div>
     </footer>
   );

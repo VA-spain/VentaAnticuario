@@ -1,16 +1,18 @@
 import { getProducts } from "@/lib/products";
+import { getCurrentUser } from "@/lib/session";
+import { getMyFavoriteIds } from "@/lib/shop";
 
 import { ProductCard } from "./product-card";
 
 const gridClass = "grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3";
 
-/** Las piezas en venta. Pide el catálogo al backend: va siempre dentro de <Suspense>. */
+/** Las piezas en venta. Lee el catálogo y la sesión: va siempre dentro de <Suspense>. */
 export async function Catalog() {
-  const products = await getProducts();
+  const [products, user] = await Promise.all([getProducts(), getCurrentUser()]);
 
   if (products === null) {
     return (
-      <p role="status" className="rounded-sm border border-line bg-paper-deep px-5 py-4 text-ink-soft">
+      <p role="status" className="notice">
         Ahora mismo no podemos mostrar el catálogo. Vuelve a intentarlo en unos minutos.
       </p>
     );
@@ -20,6 +22,8 @@ export async function Catalog() {
     return <p className="text-ink-soft">Todavía no hay piezas en el catálogo.</p>;
   }
 
+  const favorites = user ? await getMyFavoriteIds() : new Set<number>();
+
   return (
     <>
       <p className="mb-8 text-sm text-ink-soft">
@@ -27,8 +31,14 @@ export async function Catalog() {
       </p>
       <div className={gridClass}>
         {products.map((product, index) => (
-          // Las tres primeras fotos se ven nada más entrar: se cargan sin esperar al scroll.
-          <ProductCard key={product.id} product={product} eager={index < 3} />
+          <ProductCard
+            key={product.id}
+            product={product}
+            signedIn={user !== null}
+            isFavorite={favorites.has(product.id)}
+            // Las tres primeras fotos se ven nada más entrar: se cargan sin esperar al scroll.
+            eager={index < 3}
+          />
         ))}
       </div>
     </>

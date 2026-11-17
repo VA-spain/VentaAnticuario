@@ -11,15 +11,19 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.routers import auth, products
+from app.routers import auth, contact, favorites, orders, products, users
 
 app = FastAPI(
     title="Venta Anticuario API",
-    version="0.1.0",
-    description="Catálogo de piezas e inicio de sesión de Venta Anticuario.",
+    version="0.2.0",
+    description="Catálogo, cuentas de cliente, compras, favoritos, administración y contacto.",
 )
 app.include_router(products.router)
 app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(orders.router)
+app.include_router(favorites.router)
+app.include_router(contact.router)
 
 
 @app.get("/api/health", tags=["estado"])

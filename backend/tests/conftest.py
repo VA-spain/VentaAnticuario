@@ -11,12 +11,22 @@ from sqlalchemy.pool import StaticPool
 from app.config import Settings, get_settings
 from app.db import Base, get_db
 from app.main import app
-from app.models import User
+from app.models import Product, User
 from app.rate_limit import LoginThrottle, get_login_throttle
 from app.security import hash_password
+from tests.factories import make_product
 
-DEMO_EMAIL = "clienta@example.com"
-DEMO_PASSWORD = "una-clave-larga-de-prueba"
+PASSWORD = "una-clave-de-prueba"
+
+
+def as_user(username: str) -> dict[str, str]:
+    """Cabecera con la cookie de un cliente, tal como la reenvía la web."""
+    return {"Authorization": f"Bearer {username}+0987654321"}
+
+
+def as_admin(username: str) -> dict[str, str]:
+    """Cabecera con la cookie de administrador."""
+    return {"Authorization": f"Bearer 0987654321+{username}"}
 
 
 @pytest.fixture
@@ -35,12 +45,35 @@ def db(session_factory: sessionmaker[Session]) -> Iterator[Session]:
         yield session
 
 
-@pytest.fixture
-def user(db: Session) -> User:
-    user = User(email=DEMO_EMAIL, full_name="Clienta", password_hash=hash_password(DEMO_PASSWORD))
+def _add_user(db: Session, username: str, *, is_admin: bool = False) -> User:
+    user = User(username=username, password_hash=hash_password(PASSWORD), is_admin=is_admin)
     db.add(user)
     db.commit()
     return user
+
+
+@pytest.fixture
+def clienta(db: Session) -> User:
+    return _add_user(db, "clienta")
+
+
+@pytest.fixture
+def cliente(db: Session) -> User:
+    return _add_user(db, "cliente")
+
+
+@pytest.fixture
+def gestora(db: Session) -> User:
+    """Una administradora."""
+    return _add_user(db, "gestora", is_admin=True)
+
+
+@pytest.fixture
+def products(db: Session) -> list[Product]:
+    items = [make_product("reloj", 0, price_cents=240_000), make_product("plato", 1)]
+    db.add_all(items)
+    db.commit()
+    return items
 
 
 @pytest.fixture
