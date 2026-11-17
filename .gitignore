@@ -1,0 +1,25 @@
+# Secretos y configuración local: nunca al repositorio
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
+
+# Sistema y herramientas
+.DS_Store
+.claude/
+.idea/
+.vscode/

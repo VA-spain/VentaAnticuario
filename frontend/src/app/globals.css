@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+/* Paleta: papel cálido, tinta parda y un granate para las acciones. */
+@theme {
+  --color-paper: #f8f4ec;
+  --color-paper-deep: #efe8d9;
+  --color-ink: #2a2019;
+  --color-ink-soft: #5d5145;
+  --color-line: #ddd2be;
+  --color-oxblood: #6f2a22;
+  --color-oxblood-deep: #581f19;
+  --color-brass: #84652a;
+}
+
+/* Las fuentes las carga next/font en layout.tsx y llegan como variables CSS. */
+@theme inline {
+  --font-display: var(--font-cormorant), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+::selection {
+  background: var(--color-oxblood);
+  color: var(--color-paper);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-oxblood);
+  outline-offset: 3px;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex cursor-pointer items-center justify-center rounded-sm border border-oxblood px-5 py-2.5 text-sm font-medium transition-colors disabled:cursor-wait disabled:opacity-60;
+  }
+
+  .btn-primary {
+    @apply bg-oxblood text-paper hover:border-oxblood-deep hover:bg-oxblood-deep;
+  }
+
+  .btn-outline {
+    @apply text-oxblood hover:bg-oxblood hover:text-paper;
+  }
+
+  .eyebrow {
+    @apply text-xs font-medium uppercase tracking-[0.2em] text-brass;
+  }
+}

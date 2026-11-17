@@ -1,0 +1,37 @@
+# Base de datos de Venta Anticuario: MySQL en un contenedor.
+#   Levantar:  docker compose up -d
+#   Parar:     docker compose stop
+#   Borrar también los datos:  docker compose down -v
+# Las claves salen del fichero .env de esta carpeta (ver .env.example).
+name: venta-anticuario
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: venta-anticuario-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Falta MYSQL_ROOT_PASSWORD en .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-venta_anticuario}
+      MYSQL_USER: ${MYSQL_USER:-va_app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Falta MYSQL_PASSWORD en .env}
+      TZ: UTC
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    ports:
+      # Solo accesible desde este equipo, no desde la red local.
+      - "127.0.0.1:${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      # Por TCP a propósito: durante la inicialización MySQL solo atiende por socket,
+      # así que el contenedor no figura como sano hasta que acepta conexiones de verdad.
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+volumes:
+  mysql_data:
